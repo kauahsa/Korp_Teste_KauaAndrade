@@ -1,0 +1,22 @@
+<div class="app-layout min-h-screen flex flex-col bg-slate-50 text-slate-900">
+  
+  <!-- Header Bar -->
+  <app-header class="no-print"></app-header>
+
+  <!-- Main Body Grid: Sidebar + Router Outlet -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar on large screens -->
+    <app-sidebar class="hidden md:flex no-print flex-shrink-0"></app-sidebar>
+
+    <!-- Main Content View Area -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+  <!-- Global Toast Notification System -->
+  <app-toast-container class="no-print"></app-toast-container>
+
+</div>

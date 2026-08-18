@@ -1,0 +1,41 @@
+﻿## =====================================
+## .NET / C# ignores
+## =====================================
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+.idea/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+
+## =====================================
+## Angular / Node / Frontend ignores
+## =====================================
+**/node_modules/
+**/dist/
+**/.angular/
+**/.angular/cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+## =====================================
+## OS / IDE Files
+## =====================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini

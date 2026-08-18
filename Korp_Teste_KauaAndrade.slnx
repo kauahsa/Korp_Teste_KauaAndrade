@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/ServicoEstoque/">
+    <Project Path="src/ServicoEstoque/ServicoEstoque.API/ServicoEstoque.API.csproj" />
+  </Folder>
+  <Folder Name="/src/ServicoFaturamento/">
+    <Project Path="src/ServicoFaturamento/ServicoFaturamento.API/ServicoFaturamento.API.csproj" />
+  </Folder>
+</Solution>
