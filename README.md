@@ -1,9 +1,9 @@
-﻿# 🏢 Teste Técnico Korp — Emissão de Notas Fiscais e Controle de Estoque
+﻿# Teste Técnico Korp — Emissão de Notas Fiscais e Controle de Estoque
 **Candidato:** Kauã Andrade
 
 ---
 
-## 📁 Estrutura do Repositório
+## Estrutura do Repositório
 
 ```
 Teste_Korp_KauaAndrade/
@@ -20,7 +20,7 @@ Teste_Korp_KauaAndrade/
 
 ---
 
-## 🚀 Como Executar
+## Como Executar
 
 ### 1. Backend (.NET)
 Para restaurar e compilar a solução completa:
