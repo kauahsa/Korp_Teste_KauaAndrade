@@ -4,7 +4,7 @@ Para integrar este frontend Angular a um backend em **C# (.NET)** ou **Golang**,
 
 ---
 
-## 📦 1. Módulo de Produtos (`/api/produtos`)
+## 1. Módulo de Produtos (`/api/produtos`)
 
 ### `GET /api/produtos`
 - **Finalidade:** Retorna a lista de todos os produtos cadastrados com seus respectivos saldos em estoque.
@@ -57,7 +57,7 @@ Para integrar este frontend Angular a um backend em **C# (.NET)** ou **Golang**,
 
 ---
 
-## 🧾 2. Módulo de Notas Fiscais (`/api/notas-fiscais`)
+## 2. Módulo de Notas Fiscais (`/api/notas-fiscais`)
 
 ### `GET /api/notas-fiscais`
 - **Finalidade:** Listar todas as notas fiscais emitidas (com status `Aberta` ou `Fechada`).
@@ -124,7 +124,7 @@ Para integrar este frontend Angular a um backend em **C# (.NET)** ou **Golang**,
 
 ---
 
-## 🖨️ 3. Rota de Impressão & Fechamento da Nota (CRUCIAL)
+##3. Rota de Impressão & Fechamento da Nota (CRUCIAL)
 
 ### `POST /api/notas-fiscais/{id}/imprimir`
 *(Ou `PUT /api/notas-fiscais/{id}/fechar`)*
@@ -158,7 +158,4 @@ Para integrar este frontend Angular a um backend em **C# (.NET)** ou **Golang**,
 
 ---
 
-## 📊 4. Módulo Opcional: Histórico de Movimentações (`/api/movimentacoes-estoque`)
 
-### `GET /api/movimentacoes-estoque`
-- **Finalidade:** Retornar os logs de auditoria de entrada e saída automática de estoque geradas pela emissão das notas.
