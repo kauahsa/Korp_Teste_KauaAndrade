@@ -3,7 +3,6 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { ProductsComponent } from './pages/products/products.component';
 import { InvoicesListComponent } from './pages/invoices/invoices-list.component';
 import { InvoiceCreateComponent } from './pages/invoices/invoice-create.component';
-import { TechDetailsComponent } from './pages/tech-details/tech-details.component';
 
 export const routes: Routes = [
   {
@@ -30,11 +29,6 @@ export const routes: Routes = [
     path: 'notas-fiscais/nova',
     component: InvoiceCreateComponent,
     title: 'Nova Nota Fiscal | Korp Fiscal',
-  },
-  {
-    path: 'detalhamento-tecnico',
-    component: TechDetailsComponent,
-    title: 'Detalhamento Técnico | Korp Fiscal',
   },
   {
     path: '**',

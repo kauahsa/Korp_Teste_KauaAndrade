@@ -1,10 +1,10 @@
-# 🌐 Especificação das Rotas da API Backend (REST)
+﻿# Especificação das Rotas da API Backend (REST)
 
-Para integrar este frontend Angular a um backend em **C# (.NET)** ou **Golang**, você precisará disponibilizar os seguintes endpoints RESTful no endereço base (por exemplo: `http://localhost:5000/api`):
+Para integrar este frontend Angular ao backend em **C# (.NET)**, estão disponibilizados os seguintes endpoints RESTful:
 
 ---
 
-## 1. Módulo de Produtos (`/api/produtos`)
+## 1. Módulo de Produtos (`/api/produtos`) — Serviço de Estoque (.NET / SQL Server)
 
 ### `GET /api/produtos`
 - **Finalidade:** Retorna a lista de todos os produtos cadastrados com seus respectivos saldos em estoque.
@@ -12,40 +12,38 @@ Para integrar este frontend Angular a um backend em **C# (.NET)** ou **Golang**,
 ```json
 [
   {
-    "id": "prod_1",
-    "code": "PRD-001",
-    "description": "Notebook Dell Latitude 14 16GB SSD 512GB",
-    "stock": 10,
-    "unitPrice": 4850.0,
-    "unit": "UN",
-    "category": "Informática & Hardware",
-    "createdAt": "2026-08-16T10:00:00Z"
+    "id": 1,
+    "codigo": "PRD-001",
+    "descricao": "Notebook Dell Latitude 14 16GB SSD 512GB",
+    "saldo": 10
   }
 ]
 ```
 
 ### `GET /api/produtos/{id}`
-- **Finalidade:** Retorna os dados de um produto específico.
+- **Finalidade:** Retorna os dados de um produto específico por ID.
+- **Resposta Sucesso (`200 OK`):** Objeto do produto.
+- **Resposta Erro (`404 Not Found`):** Produto não encontrado.
+
+### `GET /api/produtos/{codigo}`
+- **Finalidade:** Retorna os dados de um produto específico por Código.
 - **Resposta Sucesso (`200 OK`):** Objeto do produto.
 - **Resposta Erro (`404 Not Found`):** Produto não encontrado.
 
 ### `POST /api/produtos`
 - **Finalidade:** Cadastrar um novo produto com saldo inicial.
-- **Campos Obrigatórios:** `code`, `description`, `stock`.
+- **Campos Obrigatórios:** `codigo`, `descricao`, `saldo`.
 - **Corpo da Requisição (`Request Body`):**
 ```json
 {
-  "code": "PRD-007",
-  "description": "Teclado Sem Fio Logitech",
-  "stock": 20,
-  "unitPrice": 250.0,
-  "unit": "UN",
-  "category": "Periféricos"
+  "codigo": "PRD-007",
+  "descricao": "Teclado Sem Fio Logitech",
+  "saldo": 20
 }
 ```
 - **Validações do Backend:**
-  - Código único (retornar `400 Bad Request` se já existir outro produto com o mesmo código).
-  - Saldo não negativo (`stock >= 0`).
+  - Código único (retornar erro se já existir outro produto com o mesmo código).
+  - Saldo não negativo (`saldo >= 0`).
 
 ### `PUT /api/produtos/{id}`
 - **Finalidade:** Atualizar dados ou saldo do produto.
@@ -53,44 +51,24 @@ Para integrar este frontend Angular a um backend em **C# (.NET)** ou **Golang**,
 
 ### `DELETE /api/produtos/{id}`
 - **Finalidade:** Excluir um produto.
-- **Resposta Sucesso (`204 No Content` ou `200 OK`).**
+- **Resposta Sucesso (`204 No Content`).**
+
+### `POST /api/produtos/{id}/debitar-estoque`
+- **Finalidade:** Realizar a dedução de saldo de um produto.
+- **Corpo da Requisição (`Request Body`):**
+```json
+{
+  "quantidade": 2
+}
+```
 
 ---
 
-## 2. Módulo de Notas Fiscais (`/api/notas-fiscais`)
+## 2. Módulo de Notas Fiscais (`/api/notas-fiscais`) — Serviço de Faturamento (.NET / MySQL)
 
 ### `GET /api/notas-fiscais`
 - **Finalidade:** Listar todas as notas fiscais emitidas (com status `Aberta` ou `Fechada`).
-- **Resposta Sucesso (`200 OK`):**
-```json
-[
-  {
-    "id": "inv_1001",
-    "sequenceNumber": 1001,
-    "number": "NF-001001",
-    "status": "Aberta",
-    "issueDate": "2026-08-16T14:00:00Z",
-    "customerName": "TechCorp Soluções Ltda",
-    "customerDocument": "34.123.456/0001-89",
-    "customerCity": "São Paulo / SP",
-    "operationNature": "Venda de Mercadorias",
-    "totalItems": 2,
-    "totalQuantity": 4,
-    "totalAmount": 10940.0,
-    "items": [
-      {
-        "productId": "prod_1",
-        "productCode": "PRD-001",
-        "productDescription": "Notebook Dell Latitude 14",
-        "quantity": 2,
-        "unitPrice": 4850.0,
-        "unit": "UN",
-        "totalPrice": 9700.0
-      }
-    ]
-  }
-]
-```
+- **Resposta Sucesso (`200 OK`):** Lista de notas fiscais com seus itens vinculados.
 
 ### `GET /api/notas-fiscais/{id}`
 - **Finalidade:** Obter os detalhes completos de uma nota fiscal.
@@ -100,62 +78,31 @@ Para integrar este frontend Angular a um backend em **C# (.NET)** ou **Golang**,
 - **Corpo da Requisição (`Request Body`):**
 ```json
 {
-  "customerName": "Empresa Cliente S/A",
-  "customerDocument": "12.345.678/0001-90",
-  "customerCity": "Curitiba / PR",
-  "operationNature": "Venda de Mercadorias",
-  "items": [
+  "numero": 1001,
+  "status": 0,
+  "produtos": [
     {
-      "productId": "prod_1",
-      "quantity": 2
-    },
-    {
-      "productId": "prod_3",
-      "quantity": 1
+      "produtoId": 1,
+      "quantidade": 2
     }
-  ],
-  "notes": "Entrega via transportadora."
+  ]
 }
 ```
 - **Regras do Backend:**
-  - Gerar a **numeração sequencial** automática (`sequenceNumber` incremental).
-  - Definir o `status` obrigatoriamente como **"Aberta"**.
-  - Validar se a quantidade de cada produto é $\ge 1$ e se há saldo disponível.
+  - Definir o `status` inicial como **"Aberta"** (enum 0).
+  - Validar se a quantidade de cada produto é maior que 0.
 
 ---
 
-##3. Rota de Impressão & Fechamento da Nota (CRUCIAL)
+## 3. Rota de Impressão & Fechamento da Nota
 
 ### `POST /api/notas-fiscais/{id}/imprimir`
-*(Ou `PUT /api/notas-fiscais/{id}/fechar`)*
+*(Compatível também com `PATCH /api/notas-fiscais/{id}/status` e `PUT /api/notas-fiscais/{id}/fechar`)*
 
-- **Finalidade:** Executar o fluxo fiscal de impressão, fechamento da nota e baixa atômica de estoque.
+- **Finalidade:** Executar o fluxo fiscal de impressão, fechamento da nota e baixa atômica de estoque via comunicação HTTP com o Serviço de Estoque.
 - **Regras de Negócio Obrigatórias:**
-  1. **Validação de Status:** Verificar se a nota está com status **"Aberta"**. Se já estiver "Fechada", retornar `400 Bad Request` com mensagem: *"Apenas notas fiscais com status Aberta podem ser impressas."*
-  2. **Validação de Estoque:** Verificar se todos os produtos contidos na nota possuem saldo disponível suficiente no estoque.
-  3. **Baixa Atômica no Estoque:** Debitar a quantidade de cada produto dentro de uma transação de banco de dados (`Saldo_Novo = Saldo_Anterior - Quantidade_Nota`).
-     - *Exemplo do teste:* Saldo anterior = 10; nota utiliza 2 unidades $\rightarrow$ Novo saldo = 8.
-  4. **Atualização da Nota:** Mudar o status da nota para **"Fechada"** e registrar a data de fechamento (`closedDate`).
-- **Resposta Sucesso (`200 OK`):**
-```json
-{
-  "id": "inv_1001",
-  "number": "NF-001001",
-  "status": "Fechada",
-  "closedDate": "2026-08-16T14:50:00Z",
-  "customerName": "TechCorp Soluções Ltda",
-  "totalAmount": 10940.0,
-  "items": [ ... ]
-}
-```
-- **Resposta de Erro de Saldo (`422 Unprocessable Entity` ou `400 Bad Request`):**
-```json
-{
-  "statusCode": 400,
-  "message": "Saldo insuficiente para o produto 'Notebook Dell'. Saldo disponível: 1, Solicitado na nota: 2."
-}
-```
-
----
-
-
+  1. **Validação de Status:** Verificar se a nota está com status **"Aberta"**. Se já estiver "Fechada", retornar erro informando que apenas notas abertas podem ser impressas.
+  2. **Validação de Estoque:** Consultar a API de Estoque para verificar se todos os produtos possuem saldo disponível suficiente.
+  3. **Baixa no Estoque:** Chamar o endpoint de débito de estoque do Serviço de Estoque (`POST /api/produtos/{id}/debitar-estoque`).
+  4. **Atualização da Nota:** Atualizar o status da nota para **"Fechada"** no banco de dados MySQL.
+- **Resposta Sucesso (`200 OK`):** Objeto da nota fiscal atualizada com status "Fechada".

@@ -66,24 +66,6 @@ import { map } from 'rxjs/operators';
           </nav>
         </div>
 
-        <!-- Technical Review Section -->
-        <div>
-          <div class="px-3 mb-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-            Documentação Técnica
-          </div>
-          <nav class="space-y-1">
-            <a
-              routerLink="/detalhamento-tecnico"
-              routerLinkActive="active"
-              class="nav-link bg-brand-50/50 text-brand-800 hover:bg-brand-50"
-            >
-              <app-icon name="code" [size]="18" extraClass="text-brand-600"></app-icon>
-              <span class="flex-1 font-semibold">Detalhamento Técnico</span>
-              <span class="badge badge-info text-[9px] px-1.5 py-0">Vídeo</span>
-            </a>
-          </nav>
-        </div>
-
       </div>
 
       <!-- Footer Quick Status Card -->

@@ -57,15 +57,6 @@ import { ToastService } from '../../../core/services/toast.service';
           <app-icon name="invoice" [size]="15"></app-icon>
           <span>Notas Fiscais</span>
         </a>
-
-        <a
-          routerLink="/detalhamento-tecnico"
-          routerLinkActive="bg-brand-600 text-white font-bold shadow-xs"
-          class="px-3.5 py-1.5 rounded-lg text-xs text-brand-700 hover:bg-white transition-all flex items-center gap-1.5 font-medium"
-        >
-          <app-icon name="code" [size]="15"></app-icon>
-          <span>Detalhamento Técnico</span>
-        </a>
       </nav>
 
       <!-- Right: Action Buttons -->
