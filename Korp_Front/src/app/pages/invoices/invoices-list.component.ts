@@ -2,8 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, combineLatest, BehaviorSubject } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 import { InvoiceService } from '../../core/services/invoice.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Invoice } from '../../core/models/invoice.model';
@@ -89,16 +89,25 @@ import { DanfePreviewComponent } from '../../shared/components/danfe-preview/dan
         </div>
 
         <!-- Search Box -->
-        <div class="relative w-full lg:w-80">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+        <div class="input-search-wrapper w-full lg:w-80">
+          <div class="search-icon">
             <app-icon name="search" [size]="16"></app-icon>
           </div>
           <input
             type="text"
             [formControl]="searchControl"
             placeholder="Buscar por número da nota..."
-            class="form-control pl-9 text-sm"
+            class="form-control form-control-search text-sm"
           />
+          <button
+            *ngIf="searchControl.value"
+            type="button"
+            (click)="searchControl.setValue('')"
+            class="clear-btn"
+            title="Limpar busca"
+          >
+            <app-icon name="close" [size]="14"></app-icon>
+          </button>
         </div>
 
       </div>
@@ -237,10 +246,14 @@ export class InvoicesListComponent implements OnInit {
   public closedCount$!: Observable<number>;
 
   public searchControl = new FormControl('');
-  public selectedStatusFilter: 'TODAS' | 'Aberta' | 'Fechada' = 'TODAS';
+  public statusFilter$ = new BehaviorSubject<'TODAS' | 'Aberta' | 'Fechada'>('TODAS');
 
   public selectedInvoiceForPrint: Invoice | null = null;
   public selectedInvoiceForDanfe: Invoice | null = null;
+
+  get selectedStatusFilter(): 'TODAS' | 'Aberta' | 'Fechada' {
+    return this.statusFilter$.getValue();
+  }
 
   ngOnInit(): void {
     this.invoices$ = this.invoiceService.invoices$;
@@ -254,13 +267,21 @@ export class InvoicesListComponent implements OnInit {
       map((invoices) => invoices.filter((i) => i.status === 'Fechada').length)
     );
 
-    this.filteredInvoices$ = this.invoices$.pipe(
-      map((invoices) => {
+    const search$ = this.searchControl.valueChanges.pipe(
+      startWith(this.searchControl.value || '')
+    );
+
+    this.filteredInvoices$ = combineLatest([
+      this.invoices$,
+      this.statusFilter$,
+      search$,
+    ]).pipe(
+      map(([invoices, statusFilter, searchQuery]) => {
         let result = invoices;
-        if (this.selectedStatusFilter !== 'TODAS') {
-          result = result.filter((i) => i.status === this.selectedStatusFilter);
+        if (statusFilter !== 'TODAS') {
+          result = result.filter((i) => i.status === statusFilter);
         }
-        const query = (this.searchControl.value || '').toLowerCase().trim();
+        const query = (searchQuery || '').toLowerCase().trim();
         if (query) {
           result = result.filter(
             (i) =>
@@ -274,8 +295,7 @@ export class InvoicesListComponent implements OnInit {
   }
 
   public setStatusFilter(status: 'TODAS' | 'Aberta' | 'Fechada'): void {
-    this.selectedStatusFilter = status;
-    this.invoiceService.loadInitialInvoices();
+    this.statusFilter$.next(status);
   }
 
   public openPrintModal(invoice: Invoice): void {

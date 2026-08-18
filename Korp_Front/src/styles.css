@@ -320,6 +320,53 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 
+/* Search Box & Inputs with Icon */
+.input-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-search-wrapper .search-icon {
+  position: absolute;
+  left: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--slate-400);
+  z-index: 10;
+}
+
+.input-search-wrapper .form-control,
+.form-control.form-control-search,
+.form-control.has-icon-left {
+  padding-left: 2.625rem !important;
+  padding-right: 2.25rem !important;
+}
+
+.input-search-wrapper .clear-btn {
+  position: absolute;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--slate-400);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 9999px;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  z-index: 10;
+}
+
+.input-search-wrapper .clear-btn:hover {
+  color: var(--slate-700);
+  background-color: var(--slate-100);
+}
+
 .form-error-msg {
   display: block;
   font-size: 0.75rem;

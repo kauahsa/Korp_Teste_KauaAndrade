@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
-import { Subject, Observable } from 'rxjs';
-import { map, takeUntil } from 'rxjs/operators';
+import { Subject, Observable, combineLatest } from 'rxjs';
+import { map, takeUntil, startWith } from 'rxjs/operators';
 import { ProductService } from '../../core/services/product.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Product, CreateProductDto } from '../../core/models/product.model';
@@ -42,16 +42,25 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
       <!-- Filters & Search Bar -->
       <div class="card-surface p-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <!-- Search Input -->
-        <div class="relative w-full md:w-96">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+        <div class="input-search-wrapper w-full md:w-96">
+          <div class="search-icon">
             <app-icon name="search" [size]="16"></app-icon>
           </div>
           <input
             type="text"
             [formControl]="searchControl"
             placeholder="Buscar por código ou descrição..."
-            class="form-control pl-9 text-sm"
+            class="form-control form-control-search text-sm"
           />
+          <button
+            *ngIf="searchControl.value"
+            type="button"
+            (click)="searchControl.setValue('')"
+            class="clear-btn"
+            title="Limpar busca"
+          >
+            <app-icon name="close" [size]="14"></app-icon>
+          </button>
         </div>
 
         <!-- Quick Summary Stats -->
@@ -296,9 +305,16 @@ export class ProductsComponent implements OnInit, OnDestroy {
       map((products) => products.reduce((acc, p) => acc + (p.stock || 0), 0))
     );
 
-    this.filteredProducts$ = this.products$.pipe(
-      map((products) => {
-        const query = (this.searchControl.value || '').toLowerCase().trim();
+    const search$ = this.searchControl.valueChanges.pipe(
+      startWith(this.searchControl.value || '')
+    );
+
+    this.filteredProducts$ = combineLatest([
+      this.products$,
+      search$,
+    ]).pipe(
+      map(([products, searchQuery]) => {
+        const query = (searchQuery || '').toLowerCase().trim();
         if (!query) return products;
         return products.filter(
           (p) =>
@@ -307,10 +323,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
         );
       })
     );
-
-    this.searchControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.products$ = this.productService.products$;
-    });
   }
 
   public isFieldInvalid(field: string): boolean {

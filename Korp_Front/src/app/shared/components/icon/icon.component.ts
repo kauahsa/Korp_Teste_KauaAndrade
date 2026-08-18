@@ -5,6 +5,17 @@ import { CommonModule } from '@angular/common';
   selector: 'app-icon',
   standalone: true,
   imports: [CommonModule],
+  styles: [
+    `
+      :host {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
+        vertical-align: middle;
+      }
+    `,
+  ],
   template: `
     <svg
       [attr.width]="size"
