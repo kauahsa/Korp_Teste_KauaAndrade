@@ -179,8 +179,8 @@ import { DanfePreviewComponent } from '../../shared/components/danfe-preview/dan
                       <span>Imprimir Nota</span>
                     </button>
 
-                    <!-- Botão Desabilitado para Notas Fechadas -->
-                    <div *ngIf="invoice.status === 'Fechada'" class="flex items-center gap-1">
+                    <!-- Botão para Notas Não Abertas (Fechadas) -->
+                    <div *ngIf="invoice.status !== 'Aberta'" class="flex items-center gap-1">
                       <button
                         type="button"
                         (click)="viewDanfe(invoice)"

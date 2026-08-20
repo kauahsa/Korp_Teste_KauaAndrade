@@ -36,6 +36,16 @@ public class EstoqueService : IEstoqueService
     //Cadastro de Produto
     public async Task<Produto> CadastrarProduto(Produto produto)
     {
+        var codigoNormalizado = produto.Codigo?.Trim() ?? string.Empty;
+        var existeComMesmoCodigo = await _estoqueDbContext.Produtos
+            .AnyAsync(p => p.Codigo.ToLower() == codigoNormalizado.ToLower());
+
+        if (existeComMesmoCodigo)
+        {
+            throw new InvalidOperationException($"Já existe um produto cadastrado com o código '{codigoNormalizado}'.");
+        }
+
+        produto.Codigo = codigoNormalizado;
         _estoqueDbContext.Produtos.Add(produto);
         await _estoqueDbContext.SaveChangesAsync();
         return produto;
@@ -50,7 +60,16 @@ public class EstoqueService : IEstoqueService
             return null;
         }
 
-        produto.Codigo = produtoAtualizado.Codigo;
+        var codigoNormalizado = produtoAtualizado.Codigo?.Trim() ?? string.Empty;
+        var existeComMesmoCodigo = await _estoqueDbContext.Produtos
+            .AnyAsync(p => p.Id != id && p.Codigo.ToLower() == codigoNormalizado.ToLower());
+
+        if (existeComMesmoCodigo)
+        {
+            throw new InvalidOperationException($"Já existe outro produto cadastrado com o código '{codigoNormalizado}'.");
+        }
+
+        produto.Codigo = codigoNormalizado;
         produto.Descricao = produtoAtualizado.Descricao;
         produto.QuantidadeEstoque = produtoAtualizado.QuantidadeEstoque;
 
@@ -82,6 +101,20 @@ public class EstoqueService : IEstoqueService
         }
 
         produto.QuantidadeEstoque -= quantidade;
+        await _estoqueDbContext.SaveChangesAsync();
+        return true;
+    }
+
+    //Estornar / Creditar Estoque (Ação Compensatória)
+    public async Task<bool> EstornarEstoque(int id, int quantidade)
+    {
+        var produto = await _estoqueDbContext.Produtos.FindAsync(id);
+        if (produto is null)
+        {
+            return false;
+        }
+
+        produto.QuantidadeEstoque += quantidade;
         await _estoqueDbContext.SaveChangesAsync();
         return true;
     }

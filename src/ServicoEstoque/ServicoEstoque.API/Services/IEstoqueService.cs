@@ -11,4 +11,5 @@ public interface IEstoqueService
    Task<Produto?> EditarProduto(int id, Produto produtoAtualizado);
    Task<bool> ExcluirProduto(int id);
    Task<bool> DebitarEstoque(int id, int quantidade);
+   Task<bool> EstornarEstoque(int id, int quantidade);
 }

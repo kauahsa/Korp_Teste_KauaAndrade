@@ -149,6 +149,11 @@ export class InvoiceService {
   }
 
   public processAndPrintInvoice(invoiceId: string): Observable<Invoice> {
+    const currentInvoice = this.getInvoiceById(invoiceId);
+    if (currentInvoice && currentInvoice.status !== 'Aberta') {
+      return throwError(() => new Error('Apenas notas fiscais com status "Aberta" podem ser impressas. Esta nota possui status diferente de Aberta.'));
+    }
+
     const numericId = parseInt(invoiceId, 10) || 0;
 
     return this.http.post<BackendNotaFiscal>(`${environment.faturamentoApiUrl}/notas-fiscais/${numericId}/imprimir`, {}).pipe(

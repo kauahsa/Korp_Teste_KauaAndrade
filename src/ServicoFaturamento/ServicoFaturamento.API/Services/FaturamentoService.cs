@@ -27,17 +27,24 @@ public class FaturamentoService : IFaturamentoService
 
         var httpClient = _httpClientFactory.CreateClient("EstoqueApi");
 
-        foreach (var item in notaFiscal.Produtos)
+        try
         {
-            var produto = await httpClient.GetFromJsonAsync<ProdutoEstoqueDto>($"/api/produtos/{item.ProdutoId}");
-
-            if (produto is null)
+            foreach (var item in notaFiscal.Produtos)
             {
-                throw new InvalidOperationException($"Produto com Id {item.ProdutoId} não encontrado no Estoque.");
-            }
+                var produto = await httpClient.GetFromJsonAsync<ProdutoEstoqueDto>($"/api/produtos/{item.ProdutoId}");
 
-            // Preenche a descrição com o dado do Estoque
-            item.DescricaoProduto = produto.Descricao;
+                if (produto is null)
+                {
+                    throw new InvalidOperationException($"Produto com Id {item.ProdutoId} não encontrado no Estoque.");
+                }
+
+                // Preenche a descrição com o dado do Estoque
+                item.DescricaoProduto = produto.Descricao;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new HttpRequestException("O Serviço de Estoque está temporariamente indisponível. Não foi possível validar os produtos da nota fiscal.", ex);
         }
 
         var ultimoNumero = await _faturamentoDbContext.NotasFiscais.AnyAsync()
@@ -80,37 +87,72 @@ public class FaturamentoService : IFaturamentoService
             return null;
         }
 
-        if (nota.Status == StatusNotaFiscal.Fechada)
+        if (nota.Status != StatusNotaFiscal.Aberta)
         {
-            throw new InvalidOperationException("Apenas notas fiscais com status 'Aberta' podem ser impressas/fechadas. Esta nota já está fechada.");
+            throw new InvalidOperationException("Apenas notas fiscais com status 'Aberta' podem ser impressas/fechadas. Esta nota possui status diferente de Aberta.");
         }
 
         var httpClient = _httpClientFactory.CreateClient("EstoqueApi");
 
         // 1. Validar disponibilidade de estoque de todos os produtos antes do débito
-        foreach (var item in nota.Produtos)
+        try
         {
-            var produto = await httpClient.GetFromJsonAsync<ProdutoEstoqueDto>($"/api/produtos/{item.ProdutoId}");
-            if (produto is null)
+            foreach (var item in nota.Produtos)
             {
-                throw new InvalidOperationException($"Produto com Id {item.ProdutoId} não encontrado no Estoque.");
-            }
+                var produto = await httpClient.GetFromJsonAsync<ProdutoEstoqueDto>($"/api/produtos/{item.ProdutoId}");
+                if (produto is null)
+                {
+                    throw new InvalidOperationException($"Produto com Id {item.ProdutoId} não encontrado no Estoque.");
+                }
 
-            if (produto.QuantidadeEstoque < item.Quantidade)
-            {
-                throw new InvalidOperationException($"Saldo insuficiente para o produto '{produto.Descricao}' (Id: {produto.Id}). Saldo disponível: {produto.QuantidadeEstoque}, Solicitado: {item.Quantidade}.");
+                if (produto.QuantidadeEstoque < item.Quantidade)
+                {
+                    throw new InvalidOperationException($"Saldo insuficiente para o produto '{produto.Descricao}' (Id: {produto.Id}). Saldo disponível: {produto.QuantidadeEstoque}, Solicitado: {item.Quantidade}.");
+                }
             }
         }
-
-        // 2. Debitar o saldo de cada produto no serviço de estoque
-        foreach (var item in nota.Produtos)
+        catch (HttpRequestException ex)
         {
-            var response = await httpClient.PostAsJsonAsync($"/api/produtos/{item.ProdutoId}/debitar-estoque", new { Quantidade = item.Quantidade });
-            if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException("O Serviço de Estoque está temporariamente indisponível. A nota fiscal não foi alterada e nenhum saldo foi debitado.", ex);
+        }
+
+        // 2. Debitar o saldo de cada produto no serviço de estoque com compensação
+        var itensDebitados = new List<(int ProdutoId, int Quantidade)>();
+        try
+        {
+            foreach (var item in nota.Produtos)
             {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new InvalidOperationException($"Erro ao debitar estoque do produto {item.ProdutoId}: {error}");
+                var response = await httpClient.PostAsJsonAsync($"/api/produtos/{item.ProdutoId}/debitar-estoque", new { Quantidade = item.Quantidade });
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    throw new InvalidOperationException($"Erro ao debitar estoque do produto {item.ProdutoId}: {error}");
+                }
+
+                itensDebitados.Add((item.ProdutoId, item.Quantidade));
             }
+        }
+        catch (Exception ex) when (ex is HttpRequestException || ex is InvalidOperationException)
+        {
+            // Ação compensatória: estorna os itens que já haviam sido debitados antes da falha
+            foreach (var debitado in itensDebitados)
+            {
+                try
+                {
+                    await httpClient.PostAsJsonAsync($"/api/produtos/{debitado.ProdutoId}/estornar-estoque", new { Quantidade = debitado.Quantidade });
+                }
+                catch
+                {
+                    // Falha silenciosa de estorno se o serviço de estoque estiver inalcançável
+                }
+            }
+
+            if (ex is HttpRequestException)
+            {
+                throw new HttpRequestException("O Serviço de Estoque está temporariamente indisponível. A nota fiscal não foi alterada e nenhum saldo foi debitado.", ex);
+            }
+
+            throw;
         }
 
         // 3. Atualiza o status da nota para Fechada

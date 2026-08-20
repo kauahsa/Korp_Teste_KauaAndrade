@@ -52,9 +52,13 @@ public class FaturamentoController : ControllerBase
             var notaCriada = await _faturamentoService.CadastrarNota(notaFiscal);
             return CreatedAtAction(nameof(ObterNotaPorId), new { id = notaCriada.Id }, notaCriada);
         }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new { message = ex.Message });
         }
     }
     
@@ -70,14 +74,18 @@ public class FaturamentoController : ControllerBase
 
             if (nota is null)
             {
-                return NotFound($"Nota fiscal com Id {id} não encontrada.");
+                return NotFound(new { message = $"Nota fiscal com Id {id} não encontrada." });
             }
 
             return Ok(nota);
         }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new { message = ex.Message });
         }
     }
 

@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Invoice } from '../../../core/models/invoice.model';
+import { ToastService } from '../../../core/services/toast.service';
 import { IconComponent } from '../icon/icon.component';
 
 @Component({
@@ -24,9 +25,25 @@ import { IconComponent } from '../icon/icon.component';
           </div>
 
           <div class="flex items-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm" (click)="printDocument()">
+            <button
+              *ngIf="invoice.status === 'Aberta'"
+              type="button"
+              class="btn btn-primary btn-sm"
+              (click)="printDocument()"
+              title="Imprimir documento"
+            >
               <app-icon name="printer" [size]="16"></app-icon>
               <span>Imprimir Documento</span>
+            </button>
+            <button
+              *ngIf="invoice.status !== 'Aberta'"
+              type="button"
+              class="btn btn-secondary btn-sm opacity-60 cursor-not-allowed text-slate-500 border-slate-300"
+              disabled
+              title="Impressão bloqueada: a nota fiscal possui status diferente de Aberta"
+            >
+              <app-icon name="printer" [size]="16"></app-icon>
+              <span>Impressão Bloqueada</span>
             </button>
             <button type="button" class="btn btn-ghost btn-sm" (click)="closed.emit()">
               <app-icon name="x" [size]="18"></app-icon>
@@ -101,7 +118,13 @@ export class DanfePreviewComponent {
   @Input() invoice: Invoice | null = null;
   @Output() closed = new EventEmitter<void>();
 
+  private toast = inject(ToastService);
+
   public printDocument(): void {
+    if (this.invoice?.status !== 'Aberta') {
+      this.toast.error('Apenas notas fiscais com status "Aberta" podem ser impressas.');
+      return;
+    }
     window.print();
   }
 }

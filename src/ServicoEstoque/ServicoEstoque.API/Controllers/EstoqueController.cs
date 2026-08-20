@@ -57,9 +57,15 @@ public class EstoqueController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var resultado = await _estoqueService.CadastrarProduto(produto);
-        return Ok(resultado);
-
+        try
+        {
+            var resultado = await _estoqueService.CadastrarProduto(produto);
+            return CreatedAtAction(nameof(ListarProdutoPorId), new { id = resultado.Id }, resultado);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
     
     //Rota Put de editar produto
@@ -71,14 +77,21 @@ public class EstoqueController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var produto = await _estoqueService.EditarProduto(id, produtoAtualizado);
-
-        if (produto is null)
+        try
         {
-            return NotFound($"Produto com Id {id} não encontrado.");
-        }
+            var produto = await _estoqueService.EditarProduto(id, produtoAtualizado);
 
-        return Ok(produto);
+            if (produto is null)
+            {
+                return NotFound(new { message = $"Produto com Id {id} não encontrado." });
+            }
+
+            return Ok(produto);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
     
     //Rota Delete de deletar produto
@@ -108,6 +121,25 @@ public class EstoqueController : ControllerBase
         if (!sucesso)
         {
             return BadRequest($"Saldo insuficiente ou produto com Id {id} não encontrado.");
+        }
+
+        var produtoAtualizado = await _estoqueService.ObterProdutoPorId(id);
+        return Ok(produtoAtualizado);
+    }
+
+    //Rota Post de estornar/creditar estoque (Ação Compensatória)
+    [HttpPost("{id:int}/estornar-estoque")]
+    public async Task<IActionResult> EstornarEstoque(int id, [FromBody] DebitarEstoqueDto dto)
+    {
+        if (dto.Quantidade <= 0)
+        {
+            return BadRequest("A quantidade para estornar deve ser maior que zero.");
+        }
+
+        var sucesso = await _estoqueService.EstornarEstoque(id, dto.Quantidade);
+        if (!sucesso)
+        {
+            return NotFound($"Produto com Id {id} não encontrado para estorno.");
         }
 
         var produtoAtualizado = await _estoqueService.ObterProdutoPorId(id);

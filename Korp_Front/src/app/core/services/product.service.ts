@@ -77,6 +77,13 @@ export class ProductService {
       return throwError(() => new Error('O código do produto é obrigatório.'));
     }
 
+    const existingWithCode = this.productsSubject.getValue().find(
+      (p) => p.code.toLowerCase().trim() === cleanCode.toLowerCase()
+    );
+    if (existingWithCode) {
+      return throwError(() => new Error(`Já existe um produto cadastrado com o código "${cleanCode}".`));
+    }
+
     if (!dto.description || dto.description.trim() === '') {
       return throwError(() => new Error('A descrição do produto é obrigatória.'));
     }
@@ -106,17 +113,45 @@ export class ProductService {
         return newProduct;
       }),
       catchError((err) => {
-        const errorMsg = err?.error?.message || (typeof err?.error === 'string' ? err.error : null) || err?.message || 'Erro ao cadastrar produto na API de Estoque.';
+        let errorMsg = 'Erro ao cadastrar produto na API de Estoque.';
+        if (err?.error?.message) {
+          errorMsg = err.error.message;
+        } else if (typeof err?.error === 'string') {
+          errorMsg = err.error;
+        } else if (err?.message) {
+          errorMsg = err.message;
+        }
         return throwError(() => new Error(errorMsg));
       })
     );
   }
 
   public updateProduct(id: string, dto: CreateProductDto): Observable<Product> {
+    const cleanCode = dto.code.trim();
+
+    if (!cleanCode) {
+      return throwError(() => new Error('O código do produto é obrigatório.'));
+    }
+
+    const existingWithCode = this.productsSubject.getValue().find(
+      (p) => p.id.toString() !== id.toString() && p.code.toLowerCase().trim() === cleanCode.toLowerCase()
+    );
+    if (existingWithCode) {
+      return throwError(() => new Error(`Já existe outro produto cadastrado com o código "${cleanCode}".`));
+    }
+
+    if (!dto.description || dto.description.trim() === '') {
+      return throwError(() => new Error('A descrição do produto é obrigatória.'));
+    }
+
+    if (dto.stock < 0) {
+      return throwError(() => new Error('O saldo não pode ser negativo.'));
+    }
+
     const numericId = parseInt(id, 10) || 0;
     const backendPayload = {
       id: numericId,
-      codigo: dto.code.trim(),
+      codigo: cleanCode,
       descricao: dto.description.trim(),
       quantidadeEstoque: Number(dto.stock),
     };
@@ -140,7 +175,14 @@ export class ProductService {
         return updated;
       }),
       catchError((err) => {
-        const msg = err?.error?.message || (typeof err?.error === 'string' ? err.error : null) || 'Erro ao atualizar produto na API de Estoque.';
+        let msg = 'Erro ao atualizar produto na API de Estoque.';
+        if (err?.error?.message) {
+          msg = err.error.message;
+        } else if (typeof err?.error === 'string') {
+          msg = err.error;
+        } else if (err?.message) {
+          msg = err.message;
+        }
         return throwError(() => new Error(msg));
       })
     );

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
 import { InvoiceService } from '../../core/services/invoice.service';
+import { ToastService } from '../../core/services/toast.service';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 import { PrintModalComponent } from '../../shared/components/print-modal/print-modal.component';
 import { DanfePreviewComponent } from '../../shared/components/danfe-preview/danfe-preview.component';
@@ -176,14 +177,14 @@ interface DashboardStats {
                     <button
                       *ngIf="invoice.status === 'Aberta'"
                       type="button"
-                      (click)="selectedInvoiceForPrint = invoice"
+                      (click)="openPrintModal(invoice)"
                       class="btn btn-primary btn-xs"
                     >
                       <app-icon name="printer" [size]="13"></app-icon>
                       <span>Imprimir</span>
                     </button>
                     <button
-                      *ngIf="invoice.status === 'Fechada'"
+                      *ngIf="invoice.status !== 'Aberta'"
                       type="button"
                       (click)="selectedInvoiceForDanfe = invoice"
                       class="btn btn-ghost btn-xs text-slate-500"
@@ -264,6 +265,7 @@ interface DashboardStats {
 export class DashboardComponent implements OnInit {
   private productService = inject(ProductService);
   private invoiceService = inject(InvoiceService);
+  private toast = inject(ToastService);
 
   public stats$!: Observable<DashboardStats>;
   public recentInvoices$!: Observable<Invoice[]>;
@@ -302,6 +304,14 @@ export class DashboardComponent implements OnInit {
         };
       })
     );
+  }
+
+  public openPrintModal(invoice: Invoice): void {
+    if (invoice.status !== 'Aberta') {
+      this.toast.error('Apenas notas fiscais com status "Aberta" podem ser impressas.');
+      return;
+    }
+    this.selectedInvoiceForPrint = invoice;
   }
 
   public onPrintModalClosed(success: boolean): void {
